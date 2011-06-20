@@ -60,24 +60,12 @@ private:
   bool compute_step( int mean) {
     bool shifted(false);// set to true if we performed a shift during this step
     data_t & work_b(data.back());
-    switch(work_b.size()) {
-    default:{
-      int delta(0);
-      for(data_t::iterator it(work_b.begin())
-            ; it != boost::prior(work_b.end()); ++it){
-        shifted|= (delta <0)
-          ? do_shift<true>(it)
-          :( (*it > mean) ? do_shift<false>(it) : false);
-        delta+= *it - mean;
-      }
-    }// no break
-    case 2 :{
-      data_t::iterator last(boost::prior(work_b.end())), penultimate(boost::prior(last));
-      shifted|= (*last > *penultimate) 
-        ? do_shift<true>(last)        
-        : (*last < *(penultimate) ? do_shift<false>(penultimate) : false);
-    }// break not needed
-    case 1:{}
+    int delta(0);
+    for(data_t::iterator it(work_b.begin()); it != work_b.end(); ++it){
+      shifted|= (delta <0)
+        ? do_shift<true>(it)
+        :( (*it > mean) ? do_shift<false>(it) : false);
+      delta+= *it - mean;
     }
     return shifted;
   }
