@@ -1,6 +1,6 @@
-":";exec java -cp "/usr/share/java/clojure.jar:/usr/share/java/clojure-contrib.jar" clojure.main $0 $*
+":";exec java -cp "/usr/share/java/clojure.jar" clojure.main $0 $*
 (ns code-of-duty-2011) ;; (C) Bernard Hugueney, GPL v3 or later.
-(defn -parse-vect 
+(defn- parse-vect 
   "parse sequences of [size elts] into a vector of vectors"
   [v]
   (loop [to-parse v
@@ -10,7 +10,7 @@
       (let [[nb & more] to-parse
             [current-v todo] (split-at nb more)]
         (recur todo (conj res current-v))))))
-(defn -one-step
+(defn- one-step
   "perform one step of the process on the elts of v with given mean"
   [mean v]
   ;; taking the rest because we prefix the sequence with a
@@ -31,7 +31,7 @@
                                      [a0 (dec a1) (inc a2)]
                                      [a0 a1 a2]))]
                   (recur (- (+ delta b1) mean) (into [b1 b2] r) (conj res b0)))))))
-(defn -process
+(defn- process
   "test if processing is possible and do as many steps as necessary"
   [v]
   (let [mean (/ (apply + v) (count v))]
@@ -41,9 +41,9 @@
         (let [next-res (conj res current-v)]
           (if (apply = current-v)
             next-res
-            (recur (-one-step mean current-v) next-res))))
+            (recur (one-step mean current-v) next-res))))
       nil)))
-(defn -print-res
+(defn- print-res
   "print result for one processed vector to output"
   [output res]
   (binding [*out* output]
@@ -54,13 +54,16 @@
               (println idx " : (" (apply str (interpose ", " x)) ")")))
         (print -1)))
     (println)))
-(defn main
-  []
+(defn -main
+  [& args]
   (with-open [output (java.io.FileWriter. "output.txt")]
-    (dorun (->> "input.txt" slurp (re-seq #"\d+") (map #(Integer/parseInt %)) -parse-vect 
-                (map (comp (partial -print-res output) -process))))))
+    (let [process-and-print (comp (partial print-res output)
+                                  process)]
+      (dorun (->> "input.txt" slurp (re-seq #"\d+") (map #(Integer/parseInt %))
+                  parse-vect 
+                  (map process-and-print))))))
 
 (defn command-line? []                               
   (.isAbsolute (java.io.File. *file*)))
 
-(if (command-line?) (main))
+(if (command-line?) (-main))
