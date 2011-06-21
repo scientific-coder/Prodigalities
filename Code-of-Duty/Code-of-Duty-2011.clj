@@ -15,33 +15,30 @@
   [mean v]
   ;; taking the rest because we prefix the sequence with a
   ;; dummy value to handle first elt of v as a middle of 3 elts
-  (next (loop [delta 0
-               to-process (into [nil] v)
-               res []]
-          (case (count to-process)
-                1 (into res to-process)
-                2 (let [[a0 a1] to-process]
-                    (into res (if (> a1 mean)
-                                [(inc a0) (dec a1)]
-                                [a0 a1])))
-                (let [[a0 a1 a2 & r] to-process
-                      [b0 b1 b2] (if (< delta 0)
-                                   [(inc a0) (dec a1) a2]
-                                   (if (> a1 mean)
-                                     [a0 (dec a1) (inc a2)]
-                                     [a0 a1 a2]))]
-                  (recur (- (+ delta b1) mean) (into [b1 b2] r) (conj res b0)))))))
+  (if (apply == v)
+    nil
+    (next (loop [delta 0
+                 to-process (into [nil] v)
+                 res []]
+            (case (count to-process)
+                  1 (into res to-process)
+                  2 (let [[a0 a1] to-process]
+                      (into res (if (> a1 mean)
+                                  [(inc a0) (dec a1)]
+                                  [a0 a1])))
+                  (let [[a0 a1 a2 & r] to-process
+                        [b0 b1 b2] (if (< delta 0)
+                                     [(inc a0) (dec a1) a2]
+                                     (if (> a1 mean)
+                                       [a0 (dec a1) (inc a2)]
+                                       [a0 a1 a2]))]
+                    (recur (- (+ delta b1) mean) (into [b1 b2] r) (conj res b0))))))))
 (defn- process
   "test if processing is possible and do as many steps as necessary"
   [v]
   (let [mean (/ (apply + v) (count v))]
     (if (integer? mean)
-      (loop [current-v v
-             res []]
-        (let [next-res (conj res current-v)]
-          (if (apply = current-v)
-            next-res
-            (recur (one-step mean current-v) next-res))))
+      (take-while (complement nil?) (iterate (partial one-step mean) v))
       nil)))
 (defn- print-res
   "print result for one processed vector to output"
